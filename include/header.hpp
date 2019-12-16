@@ -15,7 +15,7 @@ using std::atomic_size_t;
 
 
 struct linkCount {
-    std::atomic_uint count;
+    int64_t count;
 };
 
 static map <int64_t, size_t> linker;
@@ -53,9 +53,9 @@ public:
     ~SharedPtr() {
     }
 
-    auto opeartor = (const SharedPtr &r) -> SharedPtr&;
+    auto operator = (const SharedPtr &r) -> SharedPtr&;
 
-    auto opeartor = (SharedPtr && r)->SharedPtr &;
+    auto operator = (SharedPtr && r)->SharedPtr &;
 
     // проверяет, указывает ли указатель на объект
     operator bool() const;
