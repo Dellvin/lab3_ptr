@@ -10,8 +10,8 @@ TEST(SharedPtr, value )
     b[0] = 20;
     SharedPtr<int> test(a);
     EXPECT_EQ(static_cast<int>(test.get()[0]), 10);
-    SharedPtr<int> test2(test);
-    EXPECT_EQ(static_cast<int>(test2.get()[0]), 10);
+//    SharedPtr<int> test2(test);
+//    EXPECT_EQ(static_cast<int>(test2.get()[0]), 10);
     SharedPtr<int> test3(b);
     test.swap(test3);
     EXPECT_EQ(static_cast<int>(test.get()[0]), 20);
