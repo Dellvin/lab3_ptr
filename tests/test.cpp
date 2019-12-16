@@ -7,15 +7,14 @@ TEST(SharedPtr, value )
     int*a = new int;
     a[0] = 10;
     int*b = new int;
-    b[0] = 9;
+    b[0] = 20;
     SharedPtr<int> test(a);
-    EXPECT_EQ(static_cast<int>(test.notCleverPTR[0]), 10);
+    EXPECT_EQ(static_cast<int>(test.get()[0]), 10);
     SharedPtr<int> test2(test);
-    EXPECT_EQ(static_cast<int>(test2.notCleverPTR[0]), 10);
-    test.reset(b);
-    EXPECT_EQ(static_cast<int>(test.notCleverPTR[0]), 9);
-    test.swap(test2);
-    EXPECT_EQ(static_cast<int>(test.notCleverPTR[0]), 10);
+    EXPECT_EQ(static_cast<int>(test2.get()[0]), 10);
+    SharedPtr<int> test3(b);
+    test.swap(test3);
+    EXPECT_EQ(static_cast<int>(test.get()[0]), 20);
 }
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
