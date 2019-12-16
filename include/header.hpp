@@ -26,7 +26,7 @@ public:
         notCleverPTR = nullptr;
     }
 
-    explicit SharedPtr(T *ptr) {
+    SharedPtr(T *ptr) {
         notCleverPTR = ptr;
         if (linker.find(reinterpret_cast<int64_t>(ptr)) != linker.end())
             linker[reinterpret_cast<int64_t>(ptr)]++;
@@ -36,25 +36,22 @@ public:
 
     SharedPtr(const SharedPtr &r) {
         notCleverPTR = r.notCleverPTR;
-        currentLink = r.currentLink;
-        r.currentLink->count++;
         linker[reinterpret_cast<int64_t>(r.notCleverPTR)]++;
     }
 
     SharedPtr(SharedPtr &&r) {
         notCleverPTR = r->notCleverPTR;
-        currentLink = r->currentLink;
-        r->currentLink->count++;
         linker[reinterpret_cast<int64_t>(r.notCleverPTR)]++;
         delete (r);
     }
 
     ~SharedPtr() {
+
     }
 
-    auto operator = (const SharedPtr &r) -> SharedPtr&;
+    auto operator=(const SharedPtr &r) -> SharedPtr &;
 
-    auto operator = (SharedPtr && r)->SharedPtr &;
+    auto operator=(SharedPtr &&r) -> SharedPtr &;
 
     // проверяет, указывает ли указатель на объект
     operator bool() const;
@@ -68,30 +65,24 @@ public:
     };
 
     void reset() {
-        if (this->currentLink->count == 1) {
-            this->currentLink->count = 0;
+        if (linker[reinterpret_cast<int64_t>(this->notCleverPTR)] == 0) {
             delete (this->notCleverPTR);
-            delete (this->currentLink);
             linker[reinterpret_cast<int64_t>(this->notCleverPTR)] = 0;
             linker.erase(reinterpret_cast<int64_t>(this->notCleverPTR));
         } else {
             linker[reinterpret_cast<int64_t>(this->notCleverPTR)]--;
             notCleverPTR = nullptr;
-            currentLink = nullptr;
         }
     }
 
     void reset(T *ptr) {
-        if (this->currentLink->count == 1) {
-            this->currentLink->count = 0;
+        if (linker[reinterpret_cast<int64_t>(ptr)] == 1) {
             delete (this->notCleverPTR);
-            delete (this->currentLink);
             linker[reinterpret_cast<int64_t>(ptr)] = 0;
             linker.erase(reinterpret_cast<int64_t>(ptr));
         } else {
             linker[reinterpret_cast<int64_t>(ptr)]--;
             notCleverPTR = nullptr;
-            currentLink = nullptr;
         }
     }
 
@@ -110,7 +101,6 @@ public:
 
 public:
     T *notCleverPTR;
-    linkCount *currentLink;
 };
 
 #endif // INCLUDE_HEADER_HPP_
