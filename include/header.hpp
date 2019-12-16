@@ -1,105 +1,115 @@
-// Copyright 2018 Your Name <your_email>
+// Copyright 2018 dellvin <dellvin.black@gmail.com>
 
 #ifndef INCLUDE_HEADER_HPP_
 #define INCLUDE_HEADER_HPP_
 
 #include <iostream>
-#include <atomic>
 #include <map>
-#include <stdint.h>
-#include <utility>
 
-using std::int64_t;
-using std::atomic_size_t;
 using std::map;
-
+using std::atomic_uint;
 using std::cout;
-template <typename T>
+using std::endl;
+
+
+struct linkCount {
+    atomic_uint count;
+};
+
+static map<int64_t, size_t> linker;
+
+template<typename T>
 class SharedPtr {
 public:
-    T* _adress = nullptr;
-    SharedPtr();
-explicit  SharedPtr(T* ptr)
-    {
-        _adress = ptr;
-        if (_adresses.find(reinterpret_cast<int64_t>(ptr)) != _adresses.end())
-        {++_adresses[reinterpret_cast<int64_t>(ptr)];}
-        else
-        {_adresses.insert({reinterpret_cast<int64_t>(ptr), 1});}
-    };
-explicit  SharedPtr(const SharedPtr& r)
-{_adress = r._adress; ++_adresses[reinterpret_cast<int64_t>(_adress)];}
-    SharedPtr(SharedPtr&& r)
-    {
-        _adress = r._adress; ++_adresses[reinterpret_cast<int64_t>(_adress)];
+    SharedPtr() {
+        notCleverPTR = nullptr;
     }
 
-    ~SharedPtr()
-    {
-        --_adresses[reinterpret_cast<int64_t>(_adress)];
-        if (_adresses[reinterpret_cast<int64_t>(_adress)] == 0)
-        {
-            cout << "delete object";
-            _adresses.erase(reinterpret_cast<int64_t>(_adress));
-            delete(_adress);
+    SharedPtr(T *ptr) {
+        notCleverPTR = ptr;
+        if (linker.find(reinterpret_cast<int64_t>(ptr)) != linker.end())
+            linker[reinterpret_cast<int64_t>(ptr)]++;
+        else
+            linker.insert({reinterpret_cast<int64_t>(ptr), 1});
+    }
+
+    SharedPtr(const SharedPtr &r) {
+        notCleverPTR = r.notCleverPTR;
+        currentLink = r.currentLink;
+        r.currentLink->count++;
+        linker[reinterpret_cast<int64_t>(r.notCleverPTR)]++;
+
+    }
+
+    SharedPtr(SharedPtr &&r) {
+        notCleverPTR = r->notCleverPTR;
+        currentLink = r->currentLink;
+        r->currentLink->count++;
+        linker[reinterpret_cast<int64_t>(r.notCleverPTR)]++;
+        delete (r);
+    }
+
+    ~SharedPtr() {
+
+    }
+//    auto opeartor=(const SharedPtr& r) -> SharedPtr&;
+//    auto opeartor=(SharedPtr&& r) -> SharedPtr&;
+
+    // проверяет, указывает ли указатель на объект
+    operator bool() const;
+
+    auto operator*() const -> T &;
+
+    auto operator->() const -> T *;
+
+    auto get() -> T * {
+        return notCleverPTR;
+    };
+
+    void reset() {
+        if (this->currentLink->count == 1) {
+            this->currentLink->count = 0;
+            delete (this->notCleverPTR);
+            delete (this->currentLink);
+            linker[reinterpret_cast<int64_t>(this->notCleverPTR)] = 0;
+            linker.erase(reinterpret_cast<int64_t>(this->notCleverPTR));
+        } else {
+            linker[reinterpret_cast<int64_t>(this->notCleverPTR)]--;
+            notCleverPTR = nullptr;
+            currentLink = nullptr;
         }
     }
 
-   auto operator=(SharedPtr& r) -> SharedPtr&
-   {
-       if (_adress)
-       {reset(r._adress);}
-       return *this;
-   }
-   // auto opeartor=(SharedPtr&& r) -> SharedPtr&;
-
-    // проверяет, указывает ли указатель на объект
-    operator bool() const
-    {
-        if (!_adress){return false;}
-        return true;
-    }
-    auto operator*() const -> T&
-    {
-        return *_adress;
-    }
-    auto operator->() const -> T*
-    {
-        return _adress;
+    void reset(T *ptr) {
+        if (this->currentLink->count == 1) {
+            this->currentLink->count = 0;
+            delete (this->notCleverPTR);
+            delete (this->currentLink);
+            linker[reinterpret_cast<int64_t>(ptr)] = 0;
+            linker.erase(reinterpret_cast<int64_t>(ptr));
+        } else {
+            linker[reinterpret_cast<int64_t>(ptr)]--;
+            notCleverPTR = nullptr;
+            currentLink = nullptr;
+        }
     }
 
-    auto get() -> T*
-    {
-        return _adress;
+    void swap(SharedPtr &r) {
+        T *temporaryPTR;
+        temporaryPTR = r.notCleverPTR;
+        r.notCleverPTR = notCleverPTR;
+        notCleverPTR = temporaryPTR;
     }
-    void reset()
-    {
-        --_adresses[reinterpret_cast<int64_t>(_adress)];
-        _adress = nullptr;
-    }
-    void reset(T* ptr)
-    {
-        --_adresses[reinterpret_cast<int64_t>(_adress)];
-        _adress = ptr;
-        if (_adresses.find(reinterpret_cast<int64_t>(ptr)) != _adresses.end())
-        {++_adresses[reinterpret_cast<int64_t>(ptr)];}
-        else
-        {_adresses.insert({reinterpret_cast<int64_t>(ptr), 1});}
-    }
-    void swap(SharedPtr& r)
-    {
-        T*tmp;
-        tmp = r._adress;
-        r._adress = _adress;
-        _adress = tmp;
-    }
-    auto use_count() const -> size_t
-    {
-        return _adresses[reinterpret_cast<int64_t>(_adress)];
-    }
-    static map <int64_t , size_t > _adresses;
+
+    // возвращает количество объектов SharedPtr,
+    // которые ссылаются на тот же управляемый объект
+    auto use_count() const -> size_t {
+        return linker[reinterpret_cast<int64_t>(this->notCleverPTR)];
+    };
+
+public:
+    T *notCleverPTR;
+    linkCount *currentLink;
 };
-template <typename T>
-map<int64_t, size_t> SharedPtr<T>::_adresses{};
 
 #endif // INCLUDE_HEADER_HPP_
