@@ -11,7 +11,6 @@
 using std::map;
 using std::cout;
 using std::endl;
-using std::atomic_size_t;
 
 
 struct linkCount {
