@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <map>
+#include <utility>
 
 using std::map;
 using std::atomic_uint;
@@ -16,7 +17,7 @@ struct linkCount {
     atomic_uint count;
 };
 
-static map<int64_t, size_t> linker;
+static map <int64_t, size_t> linker;
 
 template<typename T>
 class SharedPtr {
@@ -25,7 +26,7 @@ public:
         notCleverPTR = nullptr;
     }
 
-    SharedPtr(T *ptr) {
+     explicit SharedPtr(T *ptr) {
         notCleverPTR = ptr;
         if (linker.find(reinterpret_cast<int64_t>(ptr)) != linker.end())
             linker[reinterpret_cast<int64_t>(ptr)]++;
@@ -38,7 +39,6 @@ public:
         currentLink = r.currentLink;
         r.currentLink->count++;
         linker[reinterpret_cast<int64_t>(r.notCleverPTR)]++;
-
     }
 
     SharedPtr(SharedPtr &&r) {
@@ -50,10 +50,10 @@ public:
     }
 
     ~SharedPtr() {
-
     }
-//    auto opeartor=(const SharedPtr& r) -> SharedPtr&;
-//    auto opeartor=(SharedPtr&& r) -> SharedPtr&;
+
+    auto opeartor=(const SharedPtr& r) -> SharedPtr&;
+    auto opeartor=(SharedPtr&& r) -> SharedPtr&;
 
     // проверяет, указывает ли указатель на объект
     operator bool() const;
