@@ -26,7 +26,7 @@ public:
         notCleverPTR = nullptr;
     }
 
-    SharedPtr(T *ptr) {
+    explicit SharedPtr(T *ptr) {
         notCleverPTR = ptr;
         if (linker.find(reinterpret_cast<int64_t>(ptr)) != linker.end())
             linker[reinterpret_cast<int64_t>(ptr)]++;
@@ -46,7 +46,6 @@ public:
     }
 
     ~SharedPtr() {
-
     }
 
     auto operator=(const SharedPtr &r) -> SharedPtr &;
