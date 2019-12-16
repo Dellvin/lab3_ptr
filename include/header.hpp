@@ -1,4 +1,4 @@
-// Copyright 2018 dellvin <dellvin.black@gmail.com>
+// Copyright 2018 Dellvin2000 <unknown@gmail.com>
 
 #ifndef INCLUDE_HEADER_HPP_
 #define INCLUDE_HEADER_HPP_
